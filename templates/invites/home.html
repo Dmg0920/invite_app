@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}跨年邀約總覽{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<section class="analysis-grid">
+    <a class="card analysis-card link-card" href="#per-school-chart">
+        <h2>各校邀約比例</h2>
+        <p>以堆疊長條圖呈現每所學校目前的邀約中、已邀約、會去與拒絕情形，快速掌握現況。</p>
+        <p class="analysis-meta">點擊查看互動圖表</p>
+    </a>
+    <article class="card chart-card" id="per-school-chart">
+        <h3>各校狀態分佈</h3>
+        <canvas id="schoolChart" width="400" height="240" role="img" aria-label="各校邀約狀態長條圖"></canvas>
+    </article>
+    <a class="card analysis-card link-card" href="#overall-chart">
+        <h2>整體邀約指標</h2>
+        <ul class="status-metric-list">
+            {% for metric in status_metrics %}
+                <li class="status-metric {{ metric.css }}">
+                    <span>{{ metric.label }}</span>
+                    <strong>{{ metric.count }}</strong>
+                </li>
+            {% endfor %}
+        </ul>
+        <p class="analysis-meta">滑過可感受重點，點擊看圓餅圖</p>
+    </a>
+    <article class="card chart-card" id="overall-chart">
+        <h3>整體邀約比例</h3>
+        <canvas id="overallChart" width="400" height="240" role="img" aria-label="整體邀約比例圓餅圖"></canvas>
+    </article>
+</section>
+
+<section class="card highlight-card quick-add">
+    <h2>快速新增人位</h2>
+    <p class="muted small">可一次貼上多位姓名，使用空格或換行分隔，並預先指定狀態。</p>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="invitees">
+        {{ quick_add_form.non_field_errors }}
+        <div class="form-row">
+            {{ quick_add_form.school.label_tag }}
+            {{ quick_add_form.school }}
+            {% if quick_add_form.school.errors %}
+                <div class="error">{{ quick_add_form.school.errors|join:"、" }}</div>
+            {% endif %}
+        </div>
+        <div class="form-row">
+            {{ quick_add_form.status.label_tag }}
+            {{ quick_add_form.status }}
+            {% if quick_add_form.status.errors %}
+                <div class="error">{{ quick_add_form.status.errors|join:"、" }}</div>
+            {% endif %}
+        </div>
+        <div class="form-row">
+            {{ quick_add_form.names_text.label_tag }}
+            {{ quick_add_form.names_text }}
+            {% if quick_add_form.names_text.errors %}
+                <div class="error">{{ quick_add_form.names_text.errors|join:"、" }}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="button">加入名單</button>
+    </form>
+</section>
+
+<section class="card-grid school-grid">
+    {% for school in schools %}
+        <a class="card school-card link-card" href="{% url 'school_dashboard' school.slug %}">
+            <div class="school-card__header">
+                <div class="school-icon">{{ forloop.counter }}</div>
+                <div>
+                    <h2>{{ school.label }}</h2>
+                    <p class="muted">共 {{ school.total }} 位</p>
+                </div>
+            </div>
+            <dl class="stat-pills">
+                {% for stat in school.counts_list %}
+                    <div class="stat-pill {{ stat.css }}">
+                        <dt>{{ stat.label }}</dt>
+                        <dd>{{ stat.value }}</dd>
+                    </div>
+                {% endfor %}
+            </dl>
+            <p class="analysis-meta">點擊進入 {{ school.label }} 管理</p>
+        </a>
+    {% endfor %}
+    <article class="card school-card add-school-card">
+        <h2>新增學校</h2>
+        <p class="muted small">新增後即可在快速新增區及學校頁面中使用。</p>
+        <form method="post" class="stack-form">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="school">
+            {{ school_form.non_field_errors }}
+            <div class="form-row">
+                {{ school_form.name.label_tag }}
+                {{ school_form.name }}
+                {% if school_form.name.errors %}
+                    <div class="error">{{ school_form.name.errors|join:"、" }}</div>
+                {% endif %}
+            </div>
+            <div class="form-row">
+                {{ school_form.slug.label_tag }}
+                {{ school_form.slug }}
+                {% if school_form.slug.help_text %}
+                    <small class="muted small">{{ school_form.slug.help_text }}</small>
+                {% endif %}
+                {% if school_form.slug.errors %}
+                    <div class="error">{{ school_form.slug.errors|join:"、" }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="button">新增學校</button>
+        </form>
+    </article>
+</section>
+
+{{ chart_config|json_script:"per-school-data" }}
+{{ overall_chart_config|json_script:"overall-data" }}
+
+<script>
+const perSchoolData = JSON.parse(document.getElementById('per-school-data').textContent);
+const overallData = JSON.parse(document.getElementById('overall-data').textContent);
+
+const schoolChart = document.getElementById('schoolChart').getContext('2d');
+new Chart(schoolChart, {
+    type: 'bar',
+    data: perSchoolData,
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+            x: { stacked: true, ticks: { font: { size: 12 } } },
+            y: { stacked: true, beginAtZero: true }
+        }
+    }
+});
+
+const overallChart = document.getElementById('overallChart').getContext('2d');
+new Chart(overallChart, {
+    type: 'doughnut',
+    data: overallData,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        },
+        cutout: '60%'
+    }
+});
+</script>
+{% endblock %}

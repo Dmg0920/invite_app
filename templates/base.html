@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}跨年相調邀約{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <div class="container site-header__inner">
+            <div>
+                <h1><a href="{% url 'home' %}">跨年相調邀約</a></h1>
+            </div>
+            <nav class="user-nav">
+                {% if request.user.is_authenticated %}
+                    <span class="user-pill">👋 {{ request.user.username }}</span>
+                    <a class="button button-dark" href="{% url 'logout' %}">登出</a>
+                {% else %}
+                    <a class="button button-dark" href="{% url 'login' %}">登入</a>
+                    <a class="button button-dark" href="{% url 'signup' %}">註冊</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <main class="container">
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="message {{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+        <div class="container">
+            <small>資訊僅供參考，以 Google 表單為準。</small>
+        </div>
+    </footer>
+</body>
+</html>

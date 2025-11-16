@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}登入{% endblock %}
+
+{% block content %}
+<section class="auth-card card">
+    <h2>登入</h2>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-row">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div class="error">{{ form.username.errors|join:"、" }}</div>
+            {% endif %}
+        </div>
+        <div class="form-row">
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div class="error">{{ form.password.errors|join:"、" }}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="button">登入</button>
+    </form>
+</section>
+{% endblock %}

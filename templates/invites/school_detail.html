@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ school_label }} 邀約{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'home' %}">← 回到總覽</a></p>
+
+<section class="card highlight-card">
+    <h2>新增 {{ school_label }} 名單</h2>
+    <p class="muted small">可一次輸入多位姓名並套用相同狀態。</p>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_many">
+        {{ add_form.non_field_errors }}
+        <div class="form-row">
+            {{ add_form.status.label_tag }}
+            {{ add_form.status }}
+            {% if add_form.status.errors %}
+                <div class="error">{{ add_form.status.errors|join:"、" }}</div>
+            {% endif %}
+        </div>
+        <div class="form-row">
+            {{ add_form.names_text.label_tag }}
+            {{ add_form.names_text }}
+            {% if add_form.names_text.errors %}
+                <div class="error">{{ add_form.names_text.errors|join:"、" }}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="button">加入名單</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>{{ school_label }} 邀約名單</h2>
+    <form method="post" id="bulk-form">
+        {% csrf_token %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="select-col">
+                            <label class="sr-only" for="select-all">全選</label>
+                            <input type="checkbox" id="select-all">
+                        </th>
+                        <th>姓名</th>
+                        <th>目前狀態</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invitee in invitees %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="row-selector" name="selected" value="{{ invitee.id }}">
+                            </td>
+                            <td>{{ invitee.name }}</td>
+                            <td>
+                                <span class="status-chip {{ invitee.status_css }}">{{ invitee.display_status }}</span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">目前沒有名單，先新增一位吧！</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="bulk-actions">
+            <div class="bulk-status">
+                <label for="bulk-status">將選取者變更為</label>
+                <select id="bulk-status" name="bulk_status">
+                    <option value="">選擇狀態</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="bulk-buttons">
+                <button type="submit" name="action" value="bulk_update" class="button">套用狀態</button>
+                <button type="submit" name="action" value="bulk_delete" class="button button-danger" onclick="return confirm('確定刪除勾選的名單？');">刪除選取</button>
+            </div>
+        </div>
+    </form>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const selectAll = document.getElementById("select-all");
+    if (!selectAll) return;
+    const checkboxes = document.querySelectorAll(".row-selector");
+    selectAll.addEventListener("change", function() {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    });
+});
+</script>
+{% endblock %}
