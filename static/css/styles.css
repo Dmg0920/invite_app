@@ -189,6 +189,10 @@ main {
   display: block;
 }
 
+.add-school-card form {
+  margin-top: 0.5rem;
+}
+
 .school-card__header {
   display: flex;
   align-items: center;
